@@ -22,9 +22,11 @@ make
 ./build/fireworks-gfx     # pixel mode on kitty-protocol terminals, cells elsewhere
 ./build/matrix-gfx
 ./build/ripples-gfx
+./build/fire-gfx
 ./build/fireworks         # pure cell versions
 ./build/matrix
 ./build/ripples
+./build/fire
 ```
 
 If you already cloned without `--recurse-submodules`, `make` initializes the
@@ -107,21 +109,45 @@ The same waves on a half-cell-resolution height field: each cell averages
 two sim rows and picks from a calm-to-sparkle glyph ramp (`· ~ ≈ ✦`),
 brightening with the lit side of each swell.
 
+### fire
+
+The classic demoscene fire: a heat field that cools in chunky random
+quanta as it rises, carving the flames into ragged tongues. Click to lob
+a fireball, space to flare the burner, `a` to snuff it and watch the
+flames die out.
+
+#### kitty graphics — `fire-gfx`
+
+![fire in kitty graphics mode](docs/fire-kitty.gif)
+
+The Doom fire algorithm on 2×2 pixel blocks: every cell scatters its heat
+to a randomly jittered spot one row up — the collisions and holes are
+what keep the tongues coherent. Alpha follows the heat, so the flames
+burn straight over your terminal background.
+
+#### ASCII cells — `fire`
+
+![fire in ASCII cell mode](docs/fire-cells.gif)
+
+The same heat field at half-cell resolution, rendered as an
+ember-to-blaze glyph ramp (`· : ~ * # @`) through a four-stop palette —
+`c` swaps fire for blue gas, toxic green, or violet plasma.
+
 ## Controls
 
-| Key | fireworks | matrix | ripples |
-|---|---|---|---|
-| `space` | launch a rocket | spawn a wave of drops | drop a stone |
-| mouse click | rocket at the pointer | drop at the pointer | stone at the pointer |
-| `a` | toggle the auto show | — | toggle the rain |
-| `c` | — | cycle the colour scheme | cycle the colour scheme |
-| `+` / `-` | auto launch rate | fall speed | rain rate |
-| `q` / `Esc` | quit | quit | quit |
+| Key | fireworks | matrix | ripples | fire |
+|---|---|---|---|---|
+| `space` | launch a rocket | spawn a wave of drops | drop a stone | flare the burner |
+| mouse click | rocket at the pointer | drop at the pointer | stone at the pointer | fireball at the pointer |
+| `a` | toggle the auto show | — | toggle the rain | snuff/relight the burner |
+| `c` | — | cycle the colour scheme | cycle the colour scheme | cycle the colour scheme |
+| `+` / `-` | auto launch rate | fall speed | rain rate | flame height |
+| `q` / `Esc` | quit | quit | quit | quit |
 
 ## Tuning
 
 Each demo reads env vars with its own prefix (`FIREWORKS_*`, `MATRIX_*`,
-`RIPPLES_*`):
+`RIPPLES_*`, `FIRE_*`):
 
 | Env var | Default | Effect |
 |---|---|---|
@@ -159,6 +185,7 @@ and multiplexer actually pass through:
 | `fireworks.c`, `fireworks-gfx.c` | fireworks demo (cells / kitty pixels) |
 | `matrix.c`, `matrix-gfx.c` | digital rain demo (cells / kitty pixels) |
 | `ripples.c`, `ripples-gfx.c` | water ripples demo (cells / kitty pixels) |
+| `fire.c`, `fire-gfx.c` | demoscene fire demo (cells / kitty pixels) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |
 | `tools/` | recording & screenshot harness for the README media |

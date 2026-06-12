@@ -15,7 +15,7 @@ LIB_SRCS := termpaint.c termpaint_event.c termpaint_input.c \
             termpaintx.c termpaintx_ttyrescue.c ttyrescue.c
 LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD)/termpaint/%.o)
 
-all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/matrix $(BUILD)/matrix-gfx $(BUILD)/ripples $(BUILD)/ripples-gfx $(BUILD)/kitty_probe
+all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/matrix $(BUILD)/matrix-gfx $(BUILD)/ripples $(BUILD)/ripples-gfx $(BUILD)/fire $(BUILD)/fire-gfx $(BUILD)/kitty_probe
 
 submodules:
 	@test -f $(TERMPAINT)/termpaint.h || git submodule update --init
@@ -56,6 +56,18 @@ $(BUILD)/ripples-gfx: $(BUILD)/ripples-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
 $(BUILD)/ripples-gfx.o: ripples-gfx.c kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(BUILD)/fire: $(BUILD)/fire.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/fire.o: fire.c | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD)/fire-gfx: $(BUILD)/fire-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/fire-gfx.o: fire-gfx.c kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 $(BUILD)/kitty_gfx.o: kitty_gfx.c kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -86,7 +98,13 @@ run-ripples: $(BUILD)/ripples
 run-ripples-gfx: $(BUILD)/ripples-gfx
 	./$(BUILD)/ripples-gfx
 
+run-fire: $(BUILD)/fire
+	./$(BUILD)/fire
+
+run-fire-gfx: $(BUILD)/fire-gfx
+	./$(BUILD)/fire-gfx
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx clean
+.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx run-fire run-fire-gfx clean
