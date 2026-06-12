@@ -15,7 +15,7 @@ LIB_SRCS := termpaint.c termpaint_event.c termpaint_input.c \
             termpaintx.c termpaintx_ttyrescue.c ttyrescue.c
 LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD)/termpaint/%.o)
 
-all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/matrix $(BUILD)/matrix-gfx $(BUILD)/ripples $(BUILD)/ripples-gfx $(BUILD)/fire $(BUILD)/fire-gfx $(BUILD)/kitty_probe
+all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/matrix $(BUILD)/matrix-gfx $(BUILD)/ripples $(BUILD)/ripples-gfx $(BUILD)/fire $(BUILD)/fire-gfx $(BUILD)/starfield $(BUILD)/starfield-gfx $(BUILD)/kitty_probe
 
 submodules:
 	@test -f $(TERMPAINT)/termpaint.h || git submodule update --init
@@ -68,6 +68,18 @@ $(BUILD)/fire-gfx: $(BUILD)/fire-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
 $(BUILD)/fire-gfx.o: fire-gfx.c kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(BUILD)/starfield: $(BUILD)/starfield.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/starfield.o: starfield.c | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD)/starfield-gfx: $(BUILD)/starfield-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/starfield-gfx.o: starfield-gfx.c kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 $(BUILD)/kitty_gfx.o: kitty_gfx.c kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -104,7 +116,13 @@ run-fire: $(BUILD)/fire
 run-fire-gfx: $(BUILD)/fire-gfx
 	./$(BUILD)/fire-gfx
 
+run-starfield: $(BUILD)/starfield
+	./$(BUILD)/starfield
+
+run-starfield-gfx: $(BUILD)/starfield-gfx
+	./$(BUILD)/starfield-gfx
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx run-fire run-fire-gfx clean
+.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx run-fire run-fire-gfx run-starfield run-starfield-gfx clean

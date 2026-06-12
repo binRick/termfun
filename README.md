@@ -23,10 +23,12 @@ make
 ./build/matrix-gfx
 ./build/ripples-gfx
 ./build/fire-gfx
+./build/starfield-gfx
 ./build/fireworks         # pure cell versions
 ./build/matrix
 ./build/ripples
 ./build/fire
+./build/starfield
 ```
 
 If you already cloned without `--recurse-submodules`, `make` initializes the
@@ -133,21 +135,43 @@ The same heat field at half-cell resolution, rendered as an
 ember-to-blaze glyph ramp (`· : ~ * # @`) through a four-stop palette —
 `c` swaps fire for blue gas, toxic green, or violet plasma.
 
+### starfield
+
+Stars streaming past the camera toward a vanishing point that cruises
+around on autopilot — or wherever you click. Space punches a hyperjump.
+
+#### kitty graphics — `starfield-gfx`
+
+![starfield in kitty graphics mode](docs/starfield-kitty.gif)
+
+Every star draws an additive glow segment from where it was last frame
+to where it is now, into a framebuffer that decays instead of clearing —
+so motion leaves warp streaks that stretch with speed and bend when you
+steer.
+
+#### ASCII cells — `starfield`
+
+![starfield in ASCII cell mode](docs/starfield-cells.gif)
+
+The same flight projected onto the cell grid at half-cell vertical
+resolution, each star picking a glyph from a depth ramp (`· • * ✦`) and
+brightening as it approaches.
+
 ## Controls
 
-| Key | fireworks | matrix | ripples | fire |
-|---|---|---|---|---|
-| `space` | launch a rocket | spawn a wave of drops | drop a stone | flare the burner |
-| mouse click | rocket at the pointer | drop at the pointer | stone at the pointer | fireball at the pointer |
-| `a` | toggle the auto show | — | toggle the rain | snuff/relight the burner |
-| `c` | — | cycle the colour scheme | cycle the colour scheme | cycle the colour scheme |
-| `+` / `-` | auto launch rate | fall speed | rain rate | flame height |
-| `q` / `Esc` | quit | quit | quit | quit |
+| Key | fireworks | matrix | ripples | fire | starfield |
+|---|---|---|---|---|---|
+| `space` | launch a rocket | spawn a wave of drops | drop a stone | flare the burner | hyperjump |
+| mouse click | rocket at the pointer | drop at the pointer | stone at the pointer | fireball at the pointer | steer to the pointer |
+| `a` | toggle the auto show | — | toggle the rain | snuff/relight the burner | toggle the autopilot |
+| `c` | — | cycle the colour scheme | cycle the colour scheme | cycle the colour scheme | cycle the colour scheme |
+| `+` / `-` | auto launch rate | fall speed | rain rate | flame height | warp speed |
+| `q` / `Esc` | quit | quit | quit | quit | quit |
 
 ## Tuning
 
 Each demo reads env vars with its own prefix (`FIREWORKS_*`, `MATRIX_*`,
-`RIPPLES_*`, `FIRE_*`):
+`RIPPLES_*`, `FIRE_*`, `STARFIELD_*`):
 
 | Env var | Default | Effect |
 |---|---|---|
@@ -186,6 +210,7 @@ and multiplexer actually pass through:
 | `matrix.c`, `matrix-gfx.c` | digital rain demo (cells / kitty pixels) |
 | `ripples.c`, `ripples-gfx.c` | water ripples demo (cells / kitty pixels) |
 | `fire.c`, `fire-gfx.c` | demoscene fire demo (cells / kitty pixels) |
+| `starfield.c`, `starfield-gfx.c` | warp starfield demo (cells / kitty pixels) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |
 | `tools/` | recording & screenshot harness for the README media |
