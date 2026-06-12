@@ -51,6 +51,16 @@ iTerm2 decodes the ~3 MB kitty payloads at only ~7.5 fps — use
 `*_MAXDIM=768` for smooth motion (still ~1:1 with the 800px GIF). Trim size
 with `--colors 80-96`; dense scenes land around 4-5 MB per GIF.
 
+Full-frame gradient scenes (e.g. ripples' water) overshoot that even at
+`--colors 96`; an ffmpeg palette post-pass shrinks them ~3x with no visible
+loss (keep the recording's fps, record to a tmp file first):
+
+```sh
+ffmpeg -t 7 -i /tmp/raw.gif -filter_complex \
+  '[0:v]split[b][c];[b]palettegen=max_colors=40:stats_mode=diff[p];[c][p]paletteuse=dither=none:diff_mode=rectangle' \
+  docs/<demo>-kitty.gif
+```
+
 There is also a headless harness from before the recordings existed:
 `tools/capture_kitty.py` + `tools/compose_kitty.py` decode stills straight
 from the demo's kitty protocol stream in a PTY, and `tools/render_cells.py`

@@ -21,14 +21,16 @@ cd termfun
 make
 ./build/fireworks-gfx     # pixel mode on kitty-protocol terminals, cells elsewhere
 ./build/matrix-gfx
+./build/ripples-gfx
 ./build/fireworks         # pure cell versions
 ./build/matrix
+./build/ripples
 ```
 
 If you already cloned without `--recurse-submodules`, `make` initializes the
-submodule for you. `make run`, `make run-gfx`, `make run-matrix`, and
-`make run-matrix-gfx` build and launch in one step; the `./*.sh` scripts do
-the same.
+submodule for you. The `make run-<demo>` targets (`run`, `run-gfx`,
+`run-matrix-gfx`, `run-ripples-gfx`, ...) build and launch in one step; the
+`./*.sh` scripts do the same.
 
 ## The demos
 
@@ -83,20 +85,43 @@ Text-glyph rain on the cell grid. On kitty-protocol terminals this version
 adds a soft pixel bloom layer around the stream heads; set `MATRIX_CELLS=1`
 for the pure text experience shown here.
 
+### ripples
+
+A rain-dappled pool: a damped wave equation lit by the slope of the
+surface, with sun-coloured glints on the steepest crests. Click anywhere
+to toss in a stone.
+
+#### kitty graphics — `ripples-gfx`
+
+![ripples in kitty graphics mode](docs/ripples-kitty.gif)
+
+The wave field runs at framebuffer resolution and every pixel is shaded
+by its slope, as if lit from the upper left; steep crests spill over into
+a specular sun colour. The pool's alpha fades out under the status bar.
+
+#### ASCII cells — `ripples`
+
+![ripples in ASCII cell mode](docs/ripples-cells.gif)
+
+The same waves on a half-cell-resolution height field: each cell averages
+two sim rows and picks from a calm-to-sparkle glyph ramp (`· ~ ≈ ✦`),
+brightening with the lit side of each swell.
+
 ## Controls
 
-| Key | fireworks | matrix |
-|---|---|---|
-| `space` | launch a rocket | spawn a wave of drops |
-| mouse click | rocket at the pointer | drop at the pointer |
-| `a` | toggle the auto show | — |
-| `c` | — | cycle the colour scheme |
-| `+` / `-` | auto launch rate | fall speed |
-| `q` / `Esc` | quit | quit |
+| Key | fireworks | matrix | ripples |
+|---|---|---|---|
+| `space` | launch a rocket | spawn a wave of drops | drop a stone |
+| mouse click | rocket at the pointer | drop at the pointer | stone at the pointer |
+| `a` | toggle the auto show | — | toggle the rain |
+| `c` | — | cycle the colour scheme | cycle the colour scheme |
+| `+` / `-` | auto launch rate | fall speed | rain rate |
+| `q` / `Esc` | quit | quit | quit |
 
 ## Tuning
 
-Each demo reads env vars with its own prefix (`FIREWORKS_*`, `MATRIX_*`):
+Each demo reads env vars with its own prefix (`FIREWORKS_*`, `MATRIX_*`,
+`RIPPLES_*`):
 
 | Env var | Default | Effect |
 |---|---|---|
@@ -133,6 +158,7 @@ and multiplexer actually pass through:
 |---|---|
 | `fireworks.c`, `fireworks-gfx.c` | fireworks demo (cells / kitty pixels) |
 | `matrix.c`, `matrix-gfx.c` | digital rain demo (cells / kitty pixels) |
+| `ripples.c`, `ripples-gfx.c` | water ripples demo (cells / kitty pixels) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |
 | `tools/` | recording & screenshot harness for the README media |
