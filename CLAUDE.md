@@ -7,6 +7,7 @@ Small terminal demos written in C.
 - Demos must use termpaint (vendored submodule in `termpaint/`) for terminal setup, input, and cell rendering — do not hand-roll escape sequences or use other TUI libraries.
 - For pixel effects, use the kitty graphics layer in `kitty_gfx.c`/`kitty_gfx.h` alongside termpaint; it presents an RGB framebuffer underneath the text layer (see `fireworks-gfx.c` for the pattern).
 - Build with `make`; binaries land in `build/`. Add new demos as targets in the Makefile following the existing `fireworks` rules.
+- Every demo ships as a `<demo>.c` / `<demo>-gfx.c` pair plus matching `<demo>.sh` / `<demo>-gfx.sh` launchers at the repo root (copy `fireworks.sh`: fetch the termpaint submodule if missing, `make`, `exec` the binary).
 
 ## README recordings
 
