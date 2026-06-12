@@ -20,7 +20,7 @@
 
 #define MAX_PARTICLES 4096
 #define MAX_STARS 256
-#define FRAME_MS 33
+#define FRAME_MS 50     // 20fps — kitty RGBA frames are large; tune with FIREWORKS_FPS
 #define GRAVITY 12.0f
 
 typedef enum { P_NONE, P_ROCKET, P_SPARK } ptype;
@@ -416,9 +416,9 @@ int main(void) {
     termpaint_terminal_set_cursor_visible(terminal, false);
 
     if (kitty_ok) {
-        int max_dim = 1024;
+        int max_dim = 512;  // ~480KB RGBA per frame; use FIREWORKS_MAXDIM=1024 for sharper
         const char *s = getenv("FIREWORKS_MAXDIM");
-        if (s && atoi(s) >= 256) {
+        if (s && atoi(s) >= 128) {
             max_dim = atoi(s);
         }
         pixel_mode = kitty_init(&kctx, tty_fd, max_dim);
@@ -427,7 +427,13 @@ int main(void) {
     init_stars();
     launch_rocket(-1);
 
-    int timeout = FRAME_MS;
+    int frame_ms = FRAME_MS;
+    const char *fps_env = getenv("FIREWORKS_FPS");
+    if (fps_env && atoi(fps_env) > 0) {
+        frame_ms = 1000 / atoi(fps_env);
+    }
+
+    int timeout = frame_ms;
     while (!quit_requested) {
         if (pixel_mode) {
             kitty_begin_sync(tty_fd);
@@ -444,8 +450,8 @@ int main(void) {
             break;
         }
         if (timeout == 0) {
-            step(FRAME_MS / 1000.0f);
-            timeout = FRAME_MS;
+            step(frame_ms / 1000.0f);
+            timeout = frame_ms;
         }
     }
 
