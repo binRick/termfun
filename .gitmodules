@@ -1,0 +1,3 @@
+[submodule "termpaint"]
+	path = termpaint
+	url = https://github.com/termpaint/termpaint.git
