@@ -1,15 +1,14 @@
 # termfun 🎆
 
-Fireworks in your terminal — at two resolutions.
+Eye-candy demos for your terminal — each at two resolutions.
 
-![fireworks-gfx animation](docs/fireworks.gif)
+![fireworks in kitty graphics mode](docs/fireworks-kitty.gif)
 
-Two small C demos built on [termpaint](https://github.com/termpaint/termpaint):
-
-- **`fireworks`** — a classic cell renderer: glyph ramps, true-color particles, a twinkling sky.
-- **`fireworks-gfx`** — the same show at **pixel resolution** using the
-  [kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/),
-  with automatic fallback to cell rendering anywhere else.
+Small C demos built on [termpaint](https://github.com/termpaint/termpaint).
+Each one renders as classic ASCII cells everywhere, and at **pixel
+resolution** on terminals that speak the
+[kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/)
+(kitty, iTerm2, WezTerm, ...).
 
 No dependencies beyond a C compiler and `make` — termpaint is vendored as a
 submodule and built into the binaries.
@@ -20,29 +19,28 @@ submodule and built into the binaries.
 git clone --recurse-submodules https://github.com/binRick/termfun.git
 cd termfun
 make
-./build/fireworks-gfx     # pixel mode in kitty/iTerm2/WezTerm, cells elsewhere
-./build/fireworks         # cell mode everywhere
+./build/fireworks-gfx     # pixel mode on kitty-protocol terminals, cells elsewhere
+./build/matrix-gfx
+./build/fireworks         # pure cell versions
+./build/matrix
 ```
 
-If you already cloned without `--recurse-submodules`, run
-`git submodule update --init` first. `make run` and `make run-gfx` build and
-launch in one step, and `./fireworks.sh` / `./fireworks-gfx.sh` do the same
-including the submodule fetch.
+If you already cloned without `--recurse-submodules`, `make` initializes the
+submodule for you. `make run`, `make run-gfx`, `make run-matrix`, and
+`make run-matrix-gfx` build and launch in one step; the `./*.sh` scripts do
+the same.
 
 ## The demos
 
-Every demo comes in two renderings — kitty graphics (pixels) and ASCII cells —
-shown side by side below.
+All recordings below are real iTerm2 sessions running the demos.
 
 ### fireworks
 
-Rockets, bursts, a twinkling sky, and a city skyline. `fireworks-gfx` renders
-pixels on kitty-protocol terminals and falls back to cells; `fireworks` is the
-pure cell version.
+Rockets, bursts, a twinkling sky, and a city skyline.
 
 #### kitty graphics — `fireworks-gfx`
 
-![fireworks kitty graphics](docs/fireworks-kitty.png)
+![fireworks in kitty graphics mode](docs/fireworks-kitty.gif)
 
 Renders into an RGBA framebuffer transmitted to the terminal every frame:
 
@@ -57,33 +55,58 @@ Renders into an RGBA framebuffer transmitted to the terminal every frame:
 
 #### ASCII cells — `fireworks`
 
-![fireworks ASCII cells](docs/fireworks-cells.png)
+![fireworks in ASCII cell mode](docs/fireworks-cells.gif)
 
 Pure termpaint: particles pick a glyph by intensity (`✸ ● • ·`), positions are
 tracked at half-cell vertical resolution, and the skyline windows flicker.
 This is also exactly what `fireworks-gfx` shows on terminals without graphics
 support.
 
+### matrix
+
+Digital rain with half-width katakana, bright stream heads, and fading tails.
+Press `c` to cycle colour schemes (green, cyan, amber, ...).
+
+#### kitty graphics — `matrix-gfx`
+
+![matrix in kitty graphics mode](docs/matrix-kitty.gif)
+
+The rain falls on its own pixel glyph grid, denser than the cell grid, using
+randomly generated 5×7 bitmap glyphs with a phosphor glow around each stream
+head.
+
+#### ASCII cells — `matrix`
+
+![matrix in ASCII cell mode](docs/matrix-cells.gif)
+
+Text-glyph rain on the cell grid. On kitty-protocol terminals this version
+adds a soft pixel bloom layer around the stream heads; set `MATRIX_CELLS=1`
+for the pure text experience shown here.
+
 ## Controls
 
-| Key | Action |
-|---|---|
-| `space` / mouse click | launch a rocket (at the pointer, if clicked) |
-| `a` | toggle the auto show |
-| `+` / `-` | auto launch rate |
-| `q` / `Esc` | quit |
+| Key | fireworks | matrix |
+|---|---|---|
+| `space` | launch a rocket | spawn a wave of drops |
+| mouse click | rocket at the pointer | drop at the pointer |
+| `a` | toggle the auto show | — |
+| `c` | — | cycle the colour scheme |
+| `+` / `-` | auto launch rate | fall speed |
+| `q` / `Esc` | quit | quit |
 
 ## Tuning
 
+Each demo reads env vars with its own prefix (`FIREWORKS_*`, `MATRIX_*`):
+
 | Env var | Default | Effect |
 |---|---|---|
-| `FIREWORKS_FPS` | `20` | target frame rate (gfx) |
-| `FIREWORKS_MAXDIM` | `512` | framebuffer size cap; `1024` for sharper, larger frames |
-| `FIREWORKS_CELLS` | unset | set to force cell rendering even on kitty terminals |
+| `*_FPS` | demo-specific | target frame rate (gfx) |
+| `*_MAXDIM` | `512` | framebuffer size cap; `1024` for sharper, larger frames |
+| `*_CELLS` | unset | set to force cell rendering even on kitty terminals |
 
 Frames are uncompressed base64 RGBA, so bandwidth scales with
-`FIREWORKS_MAXDIM`² × `FIREWORKS_FPS` — if a remote connection feels sluggish,
-turn one of them down.
+`MAXDIM`² × `FPS` — if a remote connection feels sluggish, turn one of them
+down.
 
 ## How pixel mode works
 
@@ -108,16 +131,16 @@ and multiplexer actually pass through:
 
 | File | What |
 |---|---|
-| `fireworks.c` | cell-mode demo |
-| `fireworks-gfx.c` | pixel-mode demo (simulation + both renderers) |
+| `fireworks.c`, `fireworks-gfx.c` | fireworks demo (cells / kitty pixels) |
+| `matrix.c`, `matrix-gfx.c` | digital rain demo (cells / kitty pixels) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |
-| `tools/` | screenshot harness — captures README images from the real demos |
+| `tools/` | recording & screenshot harness for the README media |
 | `termpaint/` | [termpaint](https://github.com/termpaint/termpaint) submodule |
 
-*All screenshots are real frames: the kitty-mode shots were decoded straight
-from each demo's kitty graphics protocol stream (`tools/capture_kitty.py`),
-and the cell-mode shots from its terminal output (`tools/render_cells.py`).*
+*All recordings are real terminal sessions: captured from iTerm2 with
+`tools/record_iterm.py`, which launches each demo in a window, drives it,
+and assembles the frames into the GIFs above.*
 
 ## License
 

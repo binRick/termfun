@@ -8,43 +8,50 @@ Small terminal demos written in C.
 - For pixel effects, use the kitty graphics layer in `kitty_gfx.c`/`kitty_gfx.h` alongside termpaint; it presents an RGB framebuffer underneath the text layer (see `fireworks-gfx.c` for the pattern).
 - Build with `make`; binaries land in `build/`. Add new demos as targets in the Makefile following the existing `fireworks` rules.
 
-## README screenshots
+## README recordings
 
-Every demo gets a README section with BOTH rendering modes broken out, using
-real captures (never mockups or synthetic images):
+Every demo gets a README section with BOTH rendering modes broken out, each
+shown as a RECORDING of the real demo running in iTerm2 (never mockups,
+synthetic images, or static stills):
 
-- `docs/<demo>-kitty.png` — kitty pixel mode, decoded from the demo's actual
-  graphics protocol stream
-- `docs/<demo>-cells.png` — ASCII cell mode, captured from real terminal output
-- `docs/<demo>.gif` — optional animated clip (kitty mode); the repo hero GIF
-  at the top of the README
+- `docs/<demo>-kitty.gif` — kitty pixel mode (`build/<demo>-gfx`)
+- `docs/<demo>-cells.gif` — ASCII cell mode (`build/<demo>`, with `*_CELLS=1`
+  if the cell binary also has a graphics layer)
 
 README layout per demo: `### <demo>` intro, then `#### kitty graphics` and
-`#### ASCII cells` subsections, each with its screenshot. See the fireworks
-section for the pattern.
+`#### ASCII cells` subsections, each with its recording. The hero GIF at the
+top reuses the flagship demo's kitty recording. Also extend the Controls and
+Tuning tables and Project layout when adding a demo.
 
-### Regenerating screenshots (tools/)
+### Recording (tools/record_iterm.py)
 
-Kitty mode — `tools/capture_kitty.py build/<demo>-gfx` runs the demo in a PTY
-that impersonates a kitty terminal (answers the graphics probe and termpaint's
-detection queries) and decodes the transmitted RGBA frames into
-`/tmp/gfx_frames/`. Then `tools/compose_kitty.py <demo>` scores the frames,
-composites them over the night background, overlays the real status bar, and
-writes the still + GIF into `docs/`.
+```sh
+python3 tools/record_iterm.py '<ENV=...> ./build/<demo>-gfx' docs/<demo>-kitty.gif \
+    --dur 12 --warmup 4 --skip 2 --key '0.5: ' --key '4.0:c'
+```
 
-Cell mode — run `build/<demo>` in tmux, dump with `tmux capture-pane -p -e`,
-render with `tools/render_cells.py` (usage in its docstring). Sample several
-frames and keep the densest one.
+The tool opens an iTerm2 window, launches the demo, captures frames via
+`screencapture` run from a second iTerm2 window, and assembles a GIF with
+real frame timing. Quirks it already handles (don't regress them):
 
-Capture quirks worth knowing:
+- The capture loop must run INSIDE iTerm2 — macOS screen-recording permission
+  (TCC) belongs to iTerm2, not to this shell. Permission is already granted.
+- iTerm2 throttles redraws of unfocused windows (recordings collapse into a
+  slideshow), so the tool refocuses the demo window after the recorder starts.
+- `write text` into a freshly created window races shell startup and gets
+  lost; the tool waits and retries.
 
-- The pty throttles multi-MB kitty frames to ~2.5 fps regardless of
-  `FIREWORKS_FPS`, so sim time runs slower than wall time — schedule scripted
-  input by captured frame count, not wall clock (see `INPUTS` in
-  `capture_kitty.py`, which needs adjusting per demo).
-- For burst-style demos, send input volleys and account for in-flight time
-  (fireworks rockets need 15-25 frames to reach apex) so the still catches
-  the payoff. Pick the best frame by scoring, not the first one that looks
-  non-empty.
-- Python deps: `pip install pyte pillow` (`--break-system-packages` on this
-  machine's Homebrew Python).
+Per-demo tuning: `--warmup` covers termpaint's detection (~2s) plus scene
+build-up; `--skip` drops dull lead-in from the GIF (fireworks rockets need
+~3.5s to apex — volley early via `--key`, then skip the climb). Keep files
+small for dense scenes with `--fps 6 --colors 96`; use `*_MAXDIM=1024` for
+sharp pixel frames. Aim for ≤3 MB per GIF.
+
+There is also a headless harness from before the recordings existed:
+`tools/capture_kitty.py` + `tools/compose_kitty.py` decode stills straight
+from the demo's kitty protocol stream in a PTY, and `tools/render_cells.py`
+renders tmux `capture-pane -e` dumps. Useful for stills or machines without
+iTerm2/TCC.
+
+Python deps: `pip install pyte pillow` (`--break-system-packages` on this
+machine's Homebrew Python).

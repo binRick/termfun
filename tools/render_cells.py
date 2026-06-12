@@ -31,6 +31,17 @@ FONTS = [
     "/System/Library/Fonts/Monaco.ttf",
 ]
 
+# Tried per glyph when the primary font lacks it (e.g. matrix's katakana)
+FALLBACK_FONTS = [
+    "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+]
+
+def has_glyph(font, ch):
+    mask = font.getmask(ch, mode="L")
+    notdef = font.getmask("", mode="L")
+    return mask.getbbox() is not None and mask.getbbox() != notdef.getbbox()
+
 def parse_color(color, default):
     if not color or color == "default":
         return default
@@ -68,6 +79,20 @@ def main():
     if font is None:
         font = ImageFont.load_default()
 
+    fallbacks = []
+    for path in FALLBACK_FONTS:
+        try:
+            fallbacks.append(ImageFont.truetype(path, font_size))
+        except Exception:
+            pass
+    font_for = {}
+
+    def pick_font(ch):
+        if ch not in font_for:
+            font_for[ch] = next(
+                (f for f in [font] + fallbacks if has_glyph(f, ch)), font)
+        return font_for[ch]
+
     img = Image.new("RGB", (cols * cell_w, rows * cell_h), BG_DEFAULT)
     draw = ImageDraw.Draw(img)
 
@@ -98,7 +123,7 @@ def main():
                 cx, cy = x + cell_w // 2, y + cell_h // 2
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=fg)
             else:
-                draw.text((x, y + 1), ch, font=font, fill=fg)
+                draw.text((x, y + 1), ch, font=pick_font(ch), fill=fg)
 
     img.save(out_file)
     print(f"Saved {img.size[0]}x{img.size[1]} -> {out_file}")
