@@ -43,9 +43,13 @@ real frame timing. Quirks it already handles (don't regress them):
 
 Per-demo tuning: `--warmup` covers termpaint's detection (~2s) plus scene
 build-up; `--skip` drops dull lead-in from the GIF (fireworks rockets need
-~3.5s to apex — volley early via `--key`, then skip the climb). Keep files
-small for dense scenes with `--fps 6 --colors 96`; use `*_MAXDIM=1024` for
-sharp pixel frames. Aim for ≤3 MB per GIF.
+~3.5s to apex — volley early via `--key`, then skip the climb). Record at
+`--fps 10` (the house playback rate) and verify the assembled GIF really hit
+it: PIL merges duplicate frames, so `n_frames` shrinking and avg duration
+exceeding 100ms means iTerm2 couldn't render that fast. At `*_MAXDIM=1024`
+iTerm2 decodes the ~3 MB kitty payloads at only ~7.5 fps — use
+`*_MAXDIM=768` for smooth motion (still ~1:1 with the 800px GIF). Trim size
+with `--colors 80-96`; dense scenes land around 4-5 MB per GIF.
 
 There is also a headless harness from before the recordings existed:
 `tools/capture_kitty.py` + `tools/compose_kitty.py` decode stills straight
