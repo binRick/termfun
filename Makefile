@@ -15,7 +15,10 @@ LIB_SRCS := termpaint.c termpaint_event.c termpaint_input.c \
             termpaintx.c termpaintx_ttyrescue.c ttyrescue.c
 LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD)/termpaint/%.o)
 
-all: $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/kitty_probe
+all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/kitty_probe
+
+submodules:
+	@test -f $(TERMPAINT)/termpaint.h || git submodule update --init
 
 $(BUILD)/fireworks: $(BUILD)/fireworks.o $(LIB_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
@@ -50,4 +53,4 @@ run-gfx: $(BUILD)/fireworks-gfx
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all run run-gfx clean
+.PHONY: all submodules run run-gfx clean
