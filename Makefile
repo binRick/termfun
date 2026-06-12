@@ -15,7 +15,7 @@ LIB_SRCS := termpaint.c termpaint_event.c termpaint_input.c \
             termpaintx.c termpaintx_ttyrescue.c ttyrescue.c
 LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD)/termpaint/%.o)
 
-all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/kitty_probe
+all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/matrix $(BUILD)/matrix-gfx $(BUILD)/kitty_probe
 
 submodules:
 	@test -f $(TERMPAINT)/termpaint.h || git submodule update --init
@@ -30,6 +30,18 @@ $(BUILD)/fireworks.o: fireworks.c | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILD)/fireworks-gfx.o: fireworks-gfx.c kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD)/matrix: $(BUILD)/matrix.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/matrix.o: matrix.c kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD)/matrix-gfx: $(BUILD)/matrix-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/matrix-gfx.o: matrix-gfx.c kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILD)/kitty_gfx.o: kitty_gfx.c kitty_gfx.h | $(BUILD)
@@ -50,7 +62,13 @@ $(BUILD)/kitty_probe: kitty_probe.c | $(BUILD)
 run-gfx: $(BUILD)/fireworks-gfx
 	./$(BUILD)/fireworks-gfx
 
+run-matrix: $(BUILD)/matrix
+	./$(BUILD)/matrix
+
+run-matrix-gfx: $(BUILD)/matrix-gfx
+	./$(BUILD)/matrix-gfx
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all submodules run run-gfx clean
+.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx clean
