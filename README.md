@@ -31,9 +31,18 @@ including the submodule fetch.
 
 ## The demos
 
-### `fireworks-gfx` — kitty pixel renderer
+Every demo comes in two renderings — kitty graphics (pixels) and ASCII cells —
+shown side by side below.
 
-![fireworks-gfx screenshot](docs/screenshot-gfx.png)
+### fireworks
+
+Rockets, bursts, a twinkling sky, and a city skyline. `fireworks-gfx` renders
+pixels on kitty-protocol terminals and falls back to cells; `fireworks` is the
+pure cell version.
+
+#### kitty graphics — `fireworks-gfx`
+
+![fireworks kitty graphics](docs/fireworks-kitty.png)
 
 Renders into an RGBA framebuffer transmitted to the terminal every frame:
 
@@ -46,9 +55,9 @@ Renders into an RGBA framebuffer transmitted to the terminal every frame:
 - **Tear-free** — frames are double-buffered image ids wrapped in
   synchronized-output (`DECSET 2026`), so cells and pixels land atomically.
 
-### `fireworks` — cell renderer
+#### ASCII cells — `fireworks`
 
-![fireworks screenshot](docs/screenshot-tui.png)
+![fireworks ASCII cells](docs/fireworks-cells.png)
 
 Pure termpaint: particles pick a glyph by intensity (`✸ ● • ·`), positions are
 tracked at half-cell vertical resolution, and the skyline windows flicker.
@@ -103,11 +112,12 @@ and multiplexer actually pass through:
 | `fireworks-gfx.c` | pixel-mode demo (simulation + both renderers) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |
+| `tools/` | screenshot harness — captures README images from the real demos |
 | `termpaint/` | [termpaint](https://github.com/termpaint/termpaint) submodule |
 
-*The screenshots above are real frames: the pixel-mode shots were decoded
-straight from the program's kitty graphics protocol stream, and the cell-mode
-shot from its terminal output.*
+*All screenshots are real frames: the kitty-mode shots were decoded straight
+from each demo's kitty graphics protocol stream (`tools/capture_kitty.py`),
+and the cell-mode shots from its terminal output (`tools/render_cells.py`).*
 
 ## License
 
