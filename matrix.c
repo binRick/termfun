@@ -22,7 +22,7 @@
 #define MAX_COLS 1024
 #define MAX_ROWS 400
 #define FRAME_MS_CELLS 33
-#define FRAME_MS_GFX 50      // kitty RGBA frames are large; tune with MATRIX_FPS
+#define FRAME_MS_GFX 33      // tune with MATRIX_FPS if frames are too heavy
 #define HEAT_DECAY 1.5f      // heat per second; tail length ≈ speed / decay
 
 static const char *GLYPHS[] = {
@@ -82,7 +82,11 @@ static void spawn_drop(int x, bool at_top) {
     drop *d = &drops[x];
     d->active = true;
     d->head = at_top ? 0 : -frand() * 6;
-    d->speed = 6 + frand() * 14;
+    // screen-relative so tall terminals don't read as slower
+    int h = termpaint_surface_height(surface);
+    if (h > MAX_ROWS) h = MAX_ROWS;
+    if (h < 10) h = 30;
+    d->speed = (0.2f + frand() * 0.45f) * h;
     spawned++;
 }
 
@@ -190,7 +194,7 @@ static void render_px(void) {
     // decay toward transparent: phosphor persistence for the head streaks
     size_t total = (size_t)W * H * 4;
     for (size_t i = 0; i < total; i++) {
-        fb[i] = (uint8_t)((fb[i] * 210) >> 8);
+        fb[i] = (uint8_t)((fb[i] * 222) >> 8);   // tuned for ~30fps streaks
     }
 
     for (int x = 0; x < cols; x++) {

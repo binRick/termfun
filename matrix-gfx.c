@@ -24,7 +24,7 @@
 #define MAX_GCOLS 1024
 #define MAX_GROWS 400
 #define FRAME_MS_CELLS 33
-#define FRAME_MS_GFX 50      // kitty RGBA frames are large; tune with MATRIX_FPS
+#define FRAME_MS_GFX 33      // tune with MATRIX_FPS if frames are too heavy
 #define HEAT_DECAY 1.5f      // heat per second; tail length ≈ speed / decay
 
 // cell-mode glyphs
@@ -128,7 +128,9 @@ static void spawn_drop(int x, bool at_top) {
     drop *d = &drops[x];
     d->active = true;
     d->head = at_top ? 0 : -frand() * 6;
-    d->speed = 6 + frand() * 14;
+    // screen-relative so the denser pixel grid doesn't read as slower
+    int rows = grows > 0 ? grows : 30;
+    d->speed = (0.2f + frand() * 0.45f) * rows;
     spawned++;
 }
 
