@@ -19,16 +19,27 @@ submodule and built into the binaries.
 git clone --recurse-submodules https://github.com/binRick/termfun.git
 cd termfun
 make
-./build/fireworks-gfx     # pixel mode on kitty-protocol terminals, cells elsewhere
+# pixel mode on kitty-protocol terminals, cells elsewhere:
+./build/fireworks-gfx
 ./build/matrix-gfx
 ./build/ripples-gfx
 ./build/fire-gfx
 ./build/starfield-gfx
-./build/fireworks         # pure cell versions
-./build/matrix
-./build/ripples
-./build/fire
-./build/starfield
+./build/plasma-gfx
+./build/tunnel-gfx
+./build/aurora-gfx
+./build/julia-gfx
+./build/metaballs-gfx
+./build/boids-gfx
+./build/lightning-gfx
+./build/snow-gfx
+./build/sand-gfx
+./build/smoke-gfx
+./build/coral-gfx
+./build/donut-gfx
+# drop the -gfx suffix for the pure cell version of any demo:
+./build/fireworks
+./build/donut
 ```
 
 If you already cloned without `--recurse-submodules`, `make` initializes the
@@ -157,21 +168,273 @@ The same flight projected onto the cell grid at half-cell vertical
 resolution, each star picking a glyph from a depth ramp (`· • * ✦`) and
 brightening as it approaches.
 
+### plasma
+
+The classic demoscene plasma: interfering sine fields that breathe and
+shift colour. Press `c` to cycle palettes, click to move the wave centre.
+
+#### kitty graphics — `plasma-gfx`
+
+![plasma in kitty graphics mode](docs/plasma-kitty.gif)
+
+Every pixel sums four sine waves — one of them radial, around a centre you
+can drag with the mouse — and looks the result up in an Inigo Quilez cosine
+palette that drifts over time, so smooth colour bands roll across the frame.
+
+#### ASCII cells — `plasma`
+
+![plasma in ASCII cell mode](docs/plasma-cells.gif)
+
+The same field sampled per cell, each character chosen from a brightness
+ramp (`·:+*x#%@`) and tinted with the palette colour.
+
+### tunnel
+
+An endless flight down a textured throat, steering wherever you click.
+
+#### kitty graphics — `tunnel-gfx`
+
+![tunnel in kitty graphics mode](docs/tunnel-kitty.gif)
+
+Each pixel is remapped to polar coordinates around a centre: the angle wraps
+the wall and `1/radius` becomes depth, so a scrolling sine-band texture
+rushes toward you. Distance fog sinks the throat into black, and the centre
+drifts on a Lissajous until you grab it.
+
+#### ASCII cells — `tunnel`
+
+![tunnel in ASCII cell mode](docs/tunnel-cells.gif)
+
+The same polar warp on the cell grid, brightness picking the glyph and the
+palette the colour.
+
+### aurora
+
+Northern lights: slow curtains of green and violet light over a transparent
+night sky.
+
+#### kitty graphics — `aurora-gfx`
+
+![aurora in kitty graphics mode](docs/aurora-kitty.gif)
+
+Several swaying curtains — each a sine-driven height with a soft upward glow
+— are summed and tinted by height and intensity. Alpha follows the light, so
+the dark sky is your real terminal background and only the glow is opaque;
+`a` toggles a dusting of stars.
+
+#### ASCII cells — `aurora`
+
+![aurora in ASCII cell mode](docs/aurora-cells.gif)
+
+Columns of shaded glyphs lit by the same curtains, sparse where the sky is
+dark.
+
+### julia
+
+An animated Julia-set fractal whose seed constant wanders the edge of the
+Mandelbrot cardioid.
+
+#### kitty graphics — `julia-gfx`
+
+![julia in kitty graphics mode](docs/julia-kitty.gif)
+
+Per-pixel escape-time iteration with smooth (fractional) colouring through a
+cycling palette, so the filaments glow without banding. The constant `c`
+glides on a loop, jumps to a new shape on `space`, or snaps to wherever you
+click.
+
+#### ASCII cells — `julia`
+
+![julia in ASCII cell mode](docs/julia-cells.gif)
+
+The same escape count mapped to a `.:-=+*#%@` ramp and palette colour.
+
+### metaballs
+
+A lava lamp: soft blobs that drift, merge, and split.
+
+#### kitty graphics — `metaballs-gfx`
+
+![metaballs in kitty graphics mode](docs/metaballs-kitty.gif)
+
+Each pixel sums an inverse-square field from every blob — below a threshold
+it stays transparent, just above it gets a bright rim, and the interior
+fills with palette-shaded goo, so overlapping blobs melt into one smooth
+surface floating over your terminal.
+
+#### ASCII cells — `metaballs`
+
+![metaballs in ASCII cell mode](docs/metaballs-cells.gif)
+
+The same field as a glyph ramp running from a sparse rim to a solid core.
+
+### boids
+
+An emergent flock that swirls, splits at a predator, and re-forms.
+
+#### kitty graphics — `boids-gfx`
+
+![boids in kitty graphics mode](docs/boids-kitty.gif)
+
+A few hundred boids run Reynolds' separation / alignment / cohesion rules;
+each is an additive glow coloured by heading, drawn into a framebuffer that
+decays instead of clearing — so the flock trails motion-blur ribbons.
+
+#### ASCII cells — `boids`
+
+![boids in ASCII cell mode](docs/boids-cells.gif)
+
+Each boid becomes a directional arrow glyph coloured by speed.
+
+### lightning
+
+Branching bolts that fork across the sky and flash the whole frame.
+
+#### kitty graphics — `lightning-gfx`
+
+![lightning in kitty graphics mode](docs/lightning-kitty.gif)
+
+Bolts are built by midpoint displacement — random perpendicular kicks with
+probabilistic branches — and drawn as additive glowing lines into a decaying
+buffer; every strike adds a translucent flash that fades over a few frames.
+
+#### ASCII cells — `lightning`
+
+![lightning in ASCII cell mode](docs/lightning-cells.gif)
+
+Bolts rasterised with line and fork glyphs over a per-cell brightness buffer
+that decays after the flash.
+
+### snow
+
+A quiet snowfall with wind and a drift that builds along the floor.
+
+#### kitty graphics — `snow-gfx`
+
+![snow in kitty graphics mode](docs/snow-kitty.gif)
+
+Hundreds of flakes fall in three parallax layers with per-flake sway and a
+wind that gusts; an accumulation height-field grows where flakes land and
+slowly settles into mounds. The sky is transparent, the snow opaque.
+
+#### ASCII cells — `snow`
+
+![snow in ASCII cell mode](docs/snow-cells.gif)
+
+Flakes pick a glyph by depth layer (`❄ ❅ * ·`) and the drift is drawn with
+block glyphs along the bottom. `c` swaps snow for ash, cherry petals, or rain.
+
+### sand
+
+A falling-sand toy: pour materials and watch them pile and flow.
+
+#### kitty graphics — `sand-gfx`
+
+![sand in kitty graphics mode](docs/sand-kitty.gif)
+
+A cellular automaton on a grid of materials, updated bottom-up every frame —
+sand piles at its angle of repose, water and oil level out (and oil floats
+up through water), embers glow and cool. Filled grains opaque, empty cells
+transparent over your terminal.
+
+#### ASCII cells — `sand`
+
+![sand in ASCII cell mode](docs/sand-cells.gif)
+
+The same grid at half-cell resolution, each material its own glyph and colour.
+
+### smoke
+
+Ink billowing through an invisible current.
+
+#### kitty graphics — `smoke-gfx`
+
+![smoke in kitty graphics mode](docs/smoke-kitty.gif)
+
+A density field is advected by semi-Lagrangian backtrace through a procedural
+curl-noise flow plus buoyancy, dissipating as it climbs; alpha follows
+density so the smoke drifts over your terminal. `c` swaps grey smoke for
+coloured ink.
+
+#### ASCII cells — `smoke`
+
+![smoke in ASCII cell mode](docs/smoke-cells.gif)
+
+Density mapped to a `·:░▒▓█` ramp and the dye colour.
+
+### coral
+
+A Gray-Scott reaction-diffusion system growing coral, spots, and mazes.
+
+#### kitty graphics — `coral-gfx`
+
+![coral in kitty graphics mode](docs/coral-kitty.gif)
+
+Two chemicals diffuse and react across the grid; mapping the inhibitor
+through a palette reveals patterns that grow and divide forever. `c` cycles
+presets (coral, mitosis, spots, maze, waves) that completely change the
+morphology.
+
+#### ASCII cells — `coral`
+
+![coral in ASCII cell mode](docs/coral-cells.gif)
+
+The same chemical field as a glyph-and-colour ramp — lower resolution, same
+restless life.
+
+### donut
+
+The spinning torus, in its two most famous renderings.
+
+#### kitty graphics — `donut-gfx`
+
+![donut in kitty graphics mode](docs/donut-kitty.gif)
+
+A parametric torus is rotated on two axes, perspective-projected, and lit per
+surface point; a z-buffer keeps the near face in front while each point
+splats a shaded disc tinted by a palette, with specular highlights toward
+white.
+
+#### ASCII cells — `donut`
+
+![donut in ASCII cell mode](docs/donut-cells.gif)
+
+Andy Sloane's ASCII donut — the same maths z-buffered onto the cell grid
+through the `.,-~:;=!*#$@` luminance ramp, here coloured by the palette. `c`
+cycles palettes and tube shapes.
+
 ## Controls
 
-| Key | fireworks | matrix | ripples | fire | starfield |
+`q` or `Esc` quits every demo. The rest of the keys share a vocabulary —
+`space` is the main action, a mouse click does it at the pointer, `a` toggles
+something, `c` cycles a colour scheme / preset, and `+` / `-` nudge a rate:
+
+| Demo | `space` | mouse click | `a` | `c` | `+` / `-` |
 |---|---|---|---|---|---|
-| `space` | launch a rocket | spawn a wave of drops | drop a stone | flare the burner | hyperjump |
-| mouse click | rocket at the pointer | drop at the pointer | stone at the pointer | fireball at the pointer | steer to the pointer |
-| `a` | toggle the auto show | — | toggle the rain | snuff/relight the burner | toggle the autopilot |
-| `c` | — | cycle the colour scheme | cycle the colour scheme | cycle the colour scheme | cycle the colour scheme |
-| `+` / `-` | auto launch rate | fall speed | rain rate | flame height | warp speed |
-| `q` / `Esc` | quit | quit | quit | quit | quit |
+| fireworks | launch a rocket | rocket at the pointer | toggle the auto show | — | auto launch rate |
+| matrix | spawn a wave of drops | drop at the pointer | — | cycle colour scheme | fall speed |
+| ripples | drop a stone | stone at the pointer | toggle the rain | cycle colour scheme | rain rate |
+| fire | flare the burner | fireball at the pointer | snuff / relight | cycle colour scheme | flame height |
+| starfield | hyperjump | steer to the pointer | toggle the autopilot | cycle colour scheme | warp speed |
+| plasma | reseed the wave centre | set centre at the pointer | freeze the animation | cycle palette | speed |
+| tunnel | twist | steer the centre | toggle centre autopilot | cycle palette | fly speed |
+| aurora | pulse the curtains | disturb the curtain | toggle stars | cycle palette | activity |
+| julia | jump to a new seed | set the seed | toggle autopilot | cycle palette | iteration detail |
+| metaballs | add a blob | blob at the pointer | toggle gravity | cycle palette | blob count |
+| boids | scatter the flock | attractor at the pointer | toggle a predator | cycle colour scheme | flock size |
+| lightning | strike | strike to the pointer | toggle the auto-storm | cycle tint | branchiness |
+| snow | gust | gust at the pointer | toggle accumulation | cycle type | wind strength |
+| sand | drop a chunk | pour at the pointer | clear the field | cycle material | brush size |
+| smoke | puff | inject dye | toggle the source | cycle dye colour | buoyancy |
+| coral | reseed | seed at the pointer | pause | cycle preset / palette | sim speed |
+| donut | tumble | spin toward the pointer | toggle autopilot | cycle palette / shape | spin speed |
 
 ## Tuning
 
 Each demo reads env vars with its own prefix (`FIREWORKS_*`, `MATRIX_*`,
-`RIPPLES_*`, `FIRE_*`, `STARFIELD_*`):
+`RIPPLES_*`, `FIRE_*`, `STARFIELD_*`, `PLASMA_*`, `TUNNEL_*`, `AURORA_*`,
+`JULIA_*`, `METABALLS_*`, `BOIDS_*`, `LIGHTNING_*`, `SNOW_*`, `SAND_*`,
+`SMOKE_*`, `CORAL_*`, `DONUT_*`):
 
 | Env var | Default | Effect |
 |---|---|---|
@@ -211,6 +474,18 @@ and multiplexer actually pass through:
 | `ripples.c`, `ripples-gfx.c` | water ripples demo (cells / kitty pixels) |
 | `fire.c`, `fire-gfx.c` | demoscene fire demo (cells / kitty pixels) |
 | `starfield.c`, `starfield-gfx.c` | warp starfield demo (cells / kitty pixels) |
+| `plasma.c`, `plasma-gfx.c` | demoscene plasma demo (cells / kitty pixels) |
+| `tunnel.c`, `tunnel-gfx.c` | texture tunnel demo (cells / kitty pixels) |
+| `aurora.c`, `aurora-gfx.c` | northern lights demo (cells / kitty pixels) |
+| `julia.c`, `julia-gfx.c` | Julia-set fractal demo (cells / kitty pixels) |
+| `metaballs.c`, `metaballs-gfx.c` | lava-lamp metaballs demo (cells / kitty pixels) |
+| `boids.c`, `boids-gfx.c` | flocking boids demo (cells / kitty pixels) |
+| `lightning.c`, `lightning-gfx.c` | branching lightning demo (cells / kitty pixels) |
+| `snow.c`, `snow-gfx.c` | snowfall demo (cells / kitty pixels) |
+| `sand.c`, `sand-gfx.c` | falling-sand demo (cells / kitty pixels) |
+| `smoke.c`, `smoke-gfx.c` | smoke / ink fluid demo (cells / kitty pixels) |
+| `coral.c`, `coral-gfx.c` | reaction-diffusion demo (cells / kitty pixels) |
+| `donut.c`, `donut-gfx.c` | spinning torus demo (cells / kitty pixels) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |
 | `tools/` | recording & screenshot harness for the README media |

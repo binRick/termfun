@@ -15,7 +15,13 @@ LIB_SRCS := termpaint.c termpaint_event.c termpaint_input.c \
             termpaintx.c termpaintx_ttyrescue.c ttyrescue.c
 LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD)/termpaint/%.o)
 
-all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/matrix $(BUILD)/matrix-gfx $(BUILD)/ripples $(BUILD)/ripples-gfx $(BUILD)/fire $(BUILD)/fire-gfx $(BUILD)/starfield $(BUILD)/starfield-gfx $(BUILD)/kitty_probe
+# Demos that follow the standard pair pattern: <demo>.c is pure cells
+# (links only termpaint), <demo>-gfx.c adds the kitty graphics layer.
+# Built via the static pattern rules near the bottom of this file.
+DEMOS := tunnel aurora julia metaballs boids lightning snow sand smoke coral donut
+DEMO_BINS := $(foreach d,$(DEMOS),$(BUILD)/$(d) $(BUILD)/$(d)-gfx)
+
+all: submodules $(BUILD)/fireworks $(BUILD)/fireworks-gfx $(BUILD)/matrix $(BUILD)/matrix-gfx $(BUILD)/ripples $(BUILD)/ripples-gfx $(BUILD)/fire $(BUILD)/fire-gfx $(BUILD)/starfield $(BUILD)/starfield-gfx $(BUILD)/plasma $(BUILD)/plasma-gfx $(DEMO_BINS) $(BUILD)/kitty_probe
 
 submodules:
 	@test -f $(TERMPAINT)/termpaint.h || git submodule update --init
@@ -80,6 +86,31 @@ $(BUILD)/starfield-gfx: $(BUILD)/starfield-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS
 $(BUILD)/starfield-gfx.o: starfield-gfx.c kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(BUILD)/plasma: $(BUILD)/plasma.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/plasma.o: plasma.c | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD)/plasma-gfx: $(BUILD)/plasma-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BUILD)/plasma-gfx.o: plasma-gfx.c kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Standard demo pair, built from the DEMOS list (static pattern rules).
+$(DEMOS:%=$(BUILD)/%): $(BUILD)/%: $(BUILD)/%.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(DEMOS:%=$(BUILD)/%.o): $(BUILD)/%.o: %.c | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(DEMOS:%=$(BUILD)/%-gfx): $(BUILD)/%-gfx: $(BUILD)/%-gfx.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+$(DEMOS:%=$(BUILD)/%-gfx.o): $(BUILD)/%-gfx.o: %-gfx.c kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 $(BUILD)/kitty_gfx.o: kitty_gfx.c kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -122,7 +153,20 @@ run-starfield: $(BUILD)/starfield
 run-starfield-gfx: $(BUILD)/starfield-gfx
 	./$(BUILD)/starfield-gfx
 
+run-plasma: $(BUILD)/plasma
+	./$(BUILD)/plasma
+
+run-plasma-gfx: $(BUILD)/plasma-gfx
+	./$(BUILD)/plasma-gfx
+
+# run-<demo> / run-<demo>-gfx for every demo in the DEMOS list.
+$(DEMOS:%=run-%): run-%: $(BUILD)/%
+	./$(BUILD)/$*
+
+$(DEMOS:%=run-%-gfx): run-%-gfx: $(BUILD)/%-gfx
+	./$(BUILD)/$*-gfx
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx run-fire run-fire-gfx run-starfield run-starfield-gfx clean
+.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx run-fire run-fire-gfx run-starfield run-starfield-gfx run-plasma run-plasma-gfx $(DEMOS:%=run-%) $(DEMOS:%=run-%-gfx) clean
