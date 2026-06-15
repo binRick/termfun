@@ -13,6 +13,10 @@ resolution** on terminals that speak the
 No dependencies beyond a C compiler and `make` — termpaint is vendored as a
 submodule and built into the binaries.
 
+There are also a few keyboard-driven **[menu-driven apps](#menu-driven-apps)** —
+a to-do list, a file browser, 2048, and a system monitor — built on the same
+toolkit, with the panels floating over the same animated backdrops.
+
 ## Quick start
 
 ```sh
@@ -29,6 +33,11 @@ make
 ./build/ripples
 ./build/fire
 ./build/starfield
+
+./build/taskman-gfx       # menu-driven apps (kitty backdrop + cells)
+./build/filer-gfx
+./build/2048-gfx
+./build/sysmon-gfx
 ```
 
 If you already cloned without `--recurse-submodules`, `make` initializes the
@@ -157,6 +166,106 @@ The same flight projected onto the cell grid at half-cell vertical
 resolution, each star picking a glyph from a depth ramp (`· • * ✦`) and
 brightening as it approaches.
 
+## Menu-driven apps
+
+Beyond the eye-candy, termfun ships a few **interactive TUI apps** — real
+keyboard-driven programs built on the same termpaint foundation, sharing a
+small widget toolkit (`tui.c`). Each renders as plain cells everywhere and, on
+kitty-protocol terminals, floats its panels over an animated pixel **backdrop**
+— the UI stays crisp text; only the wallpaper behind it is pixels. A per-cell
+cut-out mask punches the wallpaper transparent wherever a panel is drawn, so
+the panels read as floating windows.
+
+All recordings below are real iTerm2 sessions, captured with
+`tools/record_iterm.py` — same as the demos above.
+
+### taskman — to-do list
+
+Add, edit, complete, reorder and delete tasks; the list persists to
+`~/.termfun-tasks`, and a progress bar tracks how much is done.
+
+Keys: `↑↓`/`j`/`k` move · `Space` toggle done · `a` add · `e` edit · `d` delete
+· `J`/`K` reorder · `c` clear completed · `g`/`G` top/bottom · `q` quit.
+
+#### kitty graphics — `taskman-gfx`
+
+![taskman in kitty graphics mode](docs/taskman-kitty.gif)
+
+The to-do panel floats over a slow indigo-to-teal aurora; the cut-out mask
+keeps the panel and bars opaque while the wallpaper drifts in the margins.
+
+#### ASCII cells — `taskman`
+
+![taskman in ASCII cell mode](docs/taskman-cells.gif)
+
+The same UI over a quiet dark gradient — rounded panel, full-row selection
+highlight, `○`/`✓` checkboxes, an inline add/edit field and a live progress bar.
+
+### filer — file browser
+
+A scrolling directory list on the left, a live preview/details pane on the
+right (text peek, size, mtime, item counts). Directories sort first; files show
+right-aligned human sizes.
+
+Keys: `↑↓` move · `Enter`/`→` open dir · `←`/`Backspace` up · `.` toggle
+hidden · `r` refresh · `g`/`G` top/bottom · `q` quit.
+
+#### kitty graphics — `filer-gfx`
+
+![filer in kitty graphics mode](docs/filer-kitty.gif)
+
+Both panes float over a slate-to-cyan aurora, with the wallpaper showing in the
+gutter between them and around the edges.
+
+#### ASCII cells — `filer`
+
+![filer in ASCII cell mode](docs/filer-cells.gif)
+
+The two-pane browser on a quiet gradient: colour-coded entries (directories,
+symlinks, executables), a scroll indicator, and a sanitized text preview.
+
+### 2048 — sliding-tile game
+
+Slide the board; equal tiles merge; reach 2048. Live score with your best kept
+in `~/.termfun-2048`, one-step undo, and win/lose overlays.
+
+Keys: `↑↓←→` / `WASD` / `HJKL` slide · `u` undo · `n`/`r` new game · `q` quit.
+
+#### kitty graphics — `2048-gfx`
+
+![2048 in kitty graphics mode](docs/2048-kitty.gif)
+
+The classic colour tiles float on a warm animated plasma that glows through the
+gaps between tiles and around the board.
+
+#### ASCII cells — `2048`
+
+![2048 in ASCII cell mode](docs/2048-cells.gif)
+
+The same colour-graded tiles (`tui_fill` background blocks with centred
+numbers) on a quiet gradient, with centred overlays for win/game-over.
+
+### sysmon — system dashboard
+
+A live dashboard: CPU / memory / disk gauges, load average, uptime, core count
+and OS, plus the top processes by CPU — refreshing on a timer (`+`/`-` to
+tune). Stats come from `mach`/`sysctl` on macOS.
+
+Keys: `r` refresh now · `+`/`-` interval · `q` quit.
+
+#### kitty graphics — `sysmon-gfx`
+
+![sysmon in kitty graphics mode](docs/sysmon-kitty.gif)
+
+The gauge and process panels float over a dark, scrolling neon grid.
+
+#### ASCII cells — `sysmon`
+
+![sysmon in ASCII cell mode](docs/sysmon-cells.gif)
+
+The same dashboard over a quiet gradient: threshold-coloured gauge bars
+(green → amber → red) and a ranked process table.
+
 ## Controls
 
 | Key | fireworks | matrix | ripples | fire | starfield |
@@ -170,18 +279,28 @@ brightening as it approaches.
 
 ## Tuning
 
-Each demo reads env vars with its own prefix (`FIREWORKS_*`, `MATRIX_*`,
-`RIPPLES_*`, `FIRE_*`, `STARFIELD_*`):
+Each demo and app reads env vars with its own prefix (`FIREWORKS_*`,
+`MATRIX_*`, `RIPPLES_*`, `FIRE_*`, `STARFIELD_*`, and `TASKMAN_*`, `FILER_*`,
+`G2048_*`, `SYSMON_*`):
 
 | Env var | Default | Effect |
 |---|---|---|
 | `*_FPS` | demo-specific | target frame rate (gfx) |
-| `*_MAXDIM` | `512` | framebuffer size cap; `1024` for sharper, larger frames |
+| `*_MAXDIM` | `512` (`640` for apps) | framebuffer size cap; `1024` for sharper, larger frames |
 | `*_CELLS` | unset | set to force cell rendering even on kitty terminals |
 
 Frames are uncompressed base64 RGBA, so bandwidth scales with
 `MAXDIM`² × `FPS` — if a remote connection feels sluggish, turn one of them
 down.
+
+The apps also take a few app-specific vars:
+
+| Env var | Default | Effect |
+|---|---|---|
+| `TASKMAN_FILE` | `~/.termfun-tasks` | where tasks are stored |
+| `FILER_DIR` | current dir | directory to open on launch |
+| `G2048_FILE` | `~/.termfun-2048` | where the best score is stored |
+| `SYSMON_INTERVAL` | `1.5` | seconds between stat refreshes |
 
 ## How pixel mode works
 
@@ -211,6 +330,11 @@ and multiplexer actually pass through:
 | `ripples.c`, `ripples-gfx.c` | water ripples demo (cells / kitty pixels) |
 | `fire.c`, `fire-gfx.c` | demoscene fire demo (cells / kitty pixels) |
 | `starfield.c`, `starfield-gfx.c` | warp starfield demo (cells / kitty pixels) |
+| `taskman.c`, `taskman-gfx.c` | to-do list app (cells / kitty backdrop) |
+| `filer.c`, `filer-gfx.c` | file browser app (cells / kitty backdrop) |
+| `2048.c`, `2048-gfx.c` | sliding-tile game (cells / kitty backdrop) |
+| `sysmon.c`, `sysmon-gfx.c` | system dashboard app (cells / kitty backdrop) |
+| `tui.{c,h}` | shared TUI toolkit (panels, lists, input, backdrop) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |
 | `tools/` | recording & screenshot harness for the README media |
