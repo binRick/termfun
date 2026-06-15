@@ -9,6 +9,26 @@ Small terminal demos written in C.
 - Build with `make`; binaries land in `build/`. Add new demos as targets in the Makefile following the existing `fireworks` rules.
 - Every demo ships as a `<demo>.c` / `<demo>-gfx.c` pair plus matching `<demo>.sh` / `<demo>-gfx.sh` launchers at the repo root (copy `fireworks.sh`: fetch the termpaint submodule if missing, `make`, `exec` the binary).
 
+### Menu-driven TUI apps
+
+Interactive apps (`taskman`, `filer`, `2048`, `sysmon`) are still termpaint cell
+programs; they just share a small toolkit and add a decorative pixel layer.
+
+- They build on `tui.c` / `tui.h`: panels, lists, a single-line text input, a
+  colour theme, and the kitty backdrop engine. The backdrop fills the
+  framebuffer everywhere the app did *not* draw a panel (a per-cell cut-out
+  mask → alpha 0 there), so the UI reads as floating over an animated
+  wallpaper. In cell mode `tui_background` paints a quiet dark gradient
+  instead — the lively wallpaper is the kitty mode's job.
+- DRY pair convention: `<app>.c` is the whole program and renders cells;
+  `<app>-gfx.c` is a one-line shim — `#define TUI_BUILD_GFX 1` then
+  `#include "<app>.c"` — that turns on the kitty backdrop. Both binaries fall
+  back to cells on terminals without graphics support.
+- Each app honours `<APP>_CELLS` / `<APP>_MAXDIM` / `<APP>_FPS` like the
+  effects, plus app-specific vars: `TASKMAN_FILE`, `FILER_DIR`, `G2048_FILE`,
+  `SYSMON_INTERVAL`. 2048's env prefix is `G2048` because env var names can't
+  begin with a digit.
+
 ## README recordings
 
 Every demo gets a README section with BOTH rendering modes broken out, each
@@ -67,6 +87,16 @@ There is also a headless harness from before the recordings existed:
 from the demo's kitty protocol stream in a PTY, and `tools/render_cells.py`
 renders tmux `capture-pane -e` dumps. Useful for stills or machines without
 iTerm2/TCC.
+
+The interactive apps need keystrokes, not just time. Drive a recording with
+`record_iterm.py --key '2.0:a' --key '2.4:Buy milk' ...` (the warmup must
+clear termpaint's ~2s auto-detection — the first keystroke after it is
+otherwise swallowed). For headless smoke tests, `tools/drive_tui.py <prog>
+'<keys>'` runs an app in a PTY and feeds it a `;`-separated key script
+(supports `UP`/`DOWN`/`\r`/`SP`/`WAIT`), then reports the exit status — set
+`TUI_WARMUP=5` and `<APP>_CELLS=1`. For faithful cell-mode screenshots prefer
+`tmux capture-pane -p` (real terminal emulation): pyte mis-measures the
+box-drawing/symbol glyph widths and skews these panel layouts.
 
 Python deps: `pip install pyte pillow` (`--break-system-packages` on this
 machine's Homebrew Python).
