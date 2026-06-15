@@ -40,6 +40,42 @@ def osascript(script: str) -> str:
         raise RuntimeError(f"osascript failed: {out.stderr.strip()}")
     return out.stdout.strip()
 
+def decode_key(s: str) -> str:
+    # backslash escapes so --key can carry control bytes:
+    #   \e ESC  \r Enter  \n LF  \t TAB  (\e[A \e[B \e[C \e[D = arrow keys)
+    out, i = [], 0
+    table = {'e': '\x1b', 'r': '\r', 'n': '\n', 't': '\t', '\\': '\\'}
+    while i < len(s):
+        if s[i] == '\\' and i + 1 < len(s):
+            out.append(table.get(s[i + 1], s[i + 1]))
+            i += 2
+        else:
+            out.append(s[i])
+            i += 1
+    return ''.join(out)
+
+def as_applescript(s: str) -> str:
+    # build an AppleScript string expression, emitting control/non-ASCII bytes
+    # as `(ASCII character N)` so ESC, CR etc. survive
+    parts, run = [], ''
+    for b in s.encode('utf-8'):
+        if 32 <= b <= 126 and chr(b) not in '"\\':
+            run += chr(b)
+        else:
+            if run:
+                parts.append(f'"{run}"')
+                run = ''
+            parts.append(f'(ASCII character {b})')
+    if run:
+        parts.append(f'"{run}"')
+    return ' & '.join(parts) if parts else '""'
+
+def send_keys(win_id: int, text: str) -> None:
+    # newline no: send EXACTLY these bytes (the modal TUI apps treat a stray
+    # Enter as a real keystroke; send \r explicitly when you want one)
+    osascript(f'tell application "iTerm2" to tell current session '
+              f'of window id {win_id} to write text {as_applescript(text)} newline no')
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('command')
@@ -61,7 +97,7 @@ def main():
     keys = []
     for spec in args.key:
         t, _, k = spec.partition(':')
-        keys.append((float(t), k))
+        keys.append((float(t), decode_key(k)))
     keys.sort()
 
     os.makedirs(REC_DIR, exist_ok=True)
@@ -130,13 +166,12 @@ touch {REC_DIR}/DONE
         wait = t0 + t - time.time()
         if wait > 0:
             time.sleep(wait)
-        esc = k.replace('\\', '\\\\').replace('"', '\\"')
-        osascript(f'tell application "iTerm2" to tell current session of window id {win_id} to write text "{esc}"')
+        send_keys(win_id, k)
     while not os.path.exists(f'{REC_DIR}/DONE') and time.time() < deadline:
         time.sleep(0.3)
 
     # 4. quit the demo, close its window
-    osascript(f'tell application "iTerm2" to tell current session of window id {win_id} to write text "q"')
+    send_keys(win_id, "q")
     time.sleep(0.6)
     osascript(f'''
         tell application "iTerm2"
