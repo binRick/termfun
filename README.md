@@ -14,8 +14,9 @@ No dependencies beyond a C compiler and `make` — termpaint is vendored as a
 submodule and built into the binaries.
 
 There are also a few keyboard-driven **[menu-driven apps](#menu-driven-apps)** —
-a to-do list, a file browser, 2048, and a system monitor — built on the same
-toolkit, with the panels floating over the same animated backdrops.
+a to-do list, a file browser, 2048, a system monitor, and a process-exec
+tracer — built on the same toolkit, with the panels floating over the same
+animated backdrops.
 
 ## Quick start
 
@@ -38,6 +39,7 @@ make
 ./build/filer-gfx
 ./build/2048-gfx
 ./build/sysmon-gfx
+sudo ./build/extracer-gfx # process-exec tracer (Linux + root; wraps extrace)
 ```
 
 If you already cloned without `--recurse-submodules`, `make` initializes the
@@ -266,6 +268,40 @@ The gauge and process panels float over a dark, scrolling neon grid.
 The same dashboard over a quiet gradient: threshold-coloured gauge bars
 (green → amber → red) and a ranked process table.
 
+### extracer — process-exec tracer
+
+Pick one or more processes, then watch a live tree of every program their
+subtrees `exec()`. Each selected process becomes a labelled root (`▼`) and the
+commands it spawns nest beneath it, colour-tagged per root so several traces
+read clearly at once. The picker is a `ps --forest` tree — **just start typing
+to search** (subtree-aware: typing `sshd` shows sshd *and* every process running
+under it) — or launch straight into a search with `extracer sshd` (or
+`EXTRACER_FILTER=sshd`). It's a front-end for
+[`extrace`](https://github.com/chneukirchen/extrace): the process picker works
+anywhere `ps` does, but the trace pane is **Linux-only and needs root**
+(`CAP_NET_ADMIN`, for the kernel proc connector) — it runs one `extrace -p PID`
+per selection and streams their output.
+
+Keys — picker: **type to search** · `↑↓` move (hold to accelerate) · **mouse
+wheel** scroll · **click** or `Space` to select · `Enter` trace · `Esc` clear
+search / quit. Trace: `↑↓`/wheel scroll · `PgUp`/`PgDn` page · `f` follow · `b`
+back to the picker · `q` quit.
+
+#### kitty graphics — `extracer-gfx`
+
+![extracer in kitty graphics mode](docs/extracer-kitty.gif)
+
+The process picker and the live exec tree float over a warm magenta plasma; the
+cut-out mask keeps the panels opaque while the wallpaper drifts in the margins.
+
+#### ASCII cells — `extracer`
+
+![extracer in ASCII cell mode](docs/extracer-cells.gif)
+
+The same two-pane workflow over a quiet gradient: a filterable process list with
+`·`/`✓` selection marks, then the colour-tagged exec tree — each traced parent
+(`▼`) with its `exec()`'d children nested under `├` connectors.
+
 ## Controls
 
 | Key | fireworks | matrix | ripples | fire | starfield |
@@ -301,6 +337,8 @@ The apps also take a few app-specific vars:
 | `FILER_DIR` | current dir | directory to open on launch |
 | `G2048_FILE` | `~/.termfun-2048` | where the best score is stored |
 | `SYSMON_INTERVAL` | `1.5` | seconds between stat refreshes |
+| `EXTRACER_BIN` | `extrace` (on `PATH`) | path to the `extrace` binary to run |
+| `EXTRACER_FILTER` | unset | initial picker search (also `extracer <term>`) |
 
 ## How pixel mode works
 
@@ -334,6 +372,7 @@ and multiplexer actually pass through:
 | `filer.c`, `filer-gfx.c` | file browser app (cells / kitty backdrop) |
 | `2048.c`, `2048-gfx.c` | sliding-tile game (cells / kitty backdrop) |
 | `sysmon.c`, `sysmon-gfx.c` | system dashboard app (cells / kitty backdrop) |
+| `extracer.c`, `extracer-gfx.c` | process-exec tracer, a front-end for `extrace` (cells / kitty backdrop) |
 | `tui.{c,h}` | shared TUI toolkit (panels, lists, input, backdrop) |
 | `kitty_gfx.{c,h}` | minimal kitty graphics protocol support library |
 | `kitty_probe.c` | terminal graphics-support probe |

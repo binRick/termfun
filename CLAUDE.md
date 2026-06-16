@@ -11,8 +11,17 @@ Small terminal demos written in C.
 
 ### Menu-driven TUI apps
 
-Interactive apps (`taskman`, `filer`, `2048`, `sysmon`) are still termpaint cell
-programs; they just share a small toolkit and add a decorative pixel layer.
+Interactive apps (`taskman`, `filer`, `2048`, `sysmon`, `extracer`) are still
+termpaint cell programs; they just share a small toolkit and add a decorative
+pixel layer. `extracer` is a Linux-only front-end for
+[`extrace`](https://github.com/chneukirchen/extrace): pick one or more
+processes, then watch a live, colour-tagged stream of every program their
+subtrees `exec()` — it spawns one `extrace -p PID` per selection (needs root /
+`CAP_NET_ADMIN`) and shows extrace's own output, so its trace pane only does
+anything useful on Linux as root (the process picker works anywhere `ps` does).
+The picker is a `ps --forest` tree with type-to-search (no mode to enter) that
+is subtree-aware (typing `sshd` shows sshd and everything under it), plus a
+launch-time search (`extracer <term>` / `EXTRACER_FILTER`) and mouse wheel/click.
 
 - They build on `tui.c` / `tui.h`: panels, lists, a single-line text input, a
   colour theme, and the kitty backdrop engine. The backdrop fills the
@@ -26,7 +35,9 @@ programs; they just share a small toolkit and add a decorative pixel layer.
   back to cells on terminals without graphics support.
 - Each app honours `<APP>_CELLS` / `<APP>_MAXDIM` / `<APP>_FPS` like the
   effects, plus app-specific vars: `TASKMAN_FILE`, `FILER_DIR`, `G2048_FILE`,
-  `SYSMON_INTERVAL`. 2048's env prefix is `G2048` because env var names can't
+  `SYSMON_INTERVAL`, `EXTRACER_BIN` (path to the `extrace` binary, default
+  found on `PATH`), `EXTRACER_FILTER` (initial picker search; also positional
+  `extracer <term>`). 2048's env prefix is `G2048` because env var names can't
   begin with a digit.
 
 ## README recordings

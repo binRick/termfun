@@ -17,7 +17,8 @@ LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD)/termpaint/%.o)
 
 EFFECTS := fireworks fireworks-gfx matrix matrix-gfx ripples ripples-gfx \
            fire fire-gfx starfield starfield-gfx
-APPS := taskman taskman-gfx filer filer-gfx 2048 2048-gfx sysmon sysmon-gfx
+APPS := taskman taskman-gfx filer filer-gfx 2048 2048-gfx sysmon sysmon-gfx \
+        extracer extracer-gfx
 
 all: submodules $(addprefix $(BUILD)/,$(EFFECTS) $(APPS)) $(BUILD)/kitty_probe
 
@@ -129,6 +130,15 @@ $(BUILD)/sysmon.o: sysmon.c tui.h kitty_gfx.h | $(BUILD)
 $(BUILD)/sysmon-gfx.o: sysmon-gfx.c sysmon.c tui.h kitty_gfx.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+$(BUILD)/extracer: $(BUILD)/extracer.o $(BUILD)/tui.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+$(BUILD)/extracer-gfx: $(BUILD)/extracer-gfx.o $(BUILD)/tui.o $(BUILD)/kitty_gfx.o $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+$(BUILD)/extracer.o: extracer.c tui.h kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BUILD)/extracer-gfx.o: extracer-gfx.c extracer.c tui.h kitty_gfx.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 $(BUILD)/termpaint/%.o: $(TERMPAINT)/%.c | $(BUILD)/termpaint
 	$(CC) $(CFLAGS) $(LIB_CFLAGS) -c -o $@ $<
 
@@ -184,8 +194,12 @@ run-sysmon: $(BUILD)/sysmon
 	./$(BUILD)/sysmon
 run-sysmon-gfx: $(BUILD)/sysmon-gfx
 	./$(BUILD)/sysmon-gfx
+run-extracer: $(BUILD)/extracer
+	./$(BUILD)/extracer
+run-extracer-gfx: $(BUILD)/extracer-gfx
+	./$(BUILD)/extracer-gfx
 
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx run-fire run-fire-gfx run-starfield run-starfield-gfx run-taskman run-taskman-gfx run-filer run-filer-gfx run-2048 run-2048-gfx run-sysmon run-sysmon-gfx clean
+.PHONY: all submodules run run-gfx run-matrix run-matrix-gfx run-ripples run-ripples-gfx run-fire run-fire-gfx run-starfield run-starfield-gfx run-taskman run-taskman-gfx run-filer run-filer-gfx run-2048 run-2048-gfx run-sysmon run-sysmon-gfx run-extracer run-extracer-gfx clean
