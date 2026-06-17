@@ -3,8 +3,8 @@
 // refreshing on a timer. Panels float over an animated kitty-graphics grid
 // where supported (cells everywhere else).
 //
-// System stats come from mach/sysctl on macOS; other platforms show what is
-// portably available (load average and disk).
+// System stats come from mach/sysctl on macOS and from /proc on Linux; any
+// other platform falls back to what is portable (load average and disk).
 //
 // SPDX-License-Identifier: 0BSD
 //
@@ -17,12 +17,12 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/mount.h>
-#include <sys/param.h>
+#include <sys/statvfs.h>            // statvfs() — portable disk stats
 
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>               // struct timeval for KERN_BOOTTIME
 #endif
 
 #include "termpaint.h"
@@ -61,9 +61,7 @@ static char osname[64] = "this machine";
 static proc procs[PROCN];
 static int nprocs;
 
-#ifdef __APPLE__
-static unsigned long long prev_total, prev_busy;
-#endif
+static unsigned long long prev_total, prev_busy;   // CPU tick deltas (mach/proc)
 
 // ---------------------------------------------------------------- sampling
 static void sample_cpu(void) {
@@ -83,6 +81,25 @@ static void sample_cpu(void) {
         prev_total = total;
         prev_busy = busy;
     }
+#else
+    // Linux: aggregate jiffies from the first line of /proc/stat.
+    FILE *f = fopen("/proc/stat", "r");
+    if (!f) {
+        return;
+    }
+    unsigned long long u = 0, n = 0, sy = 0, id = 0, io = 0, irq = 0, si = 0, st = 0;
+    if (fscanf(f, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",
+               &u, &n, &sy, &id, &io, &irq, &si, &st) >= 4) {
+        unsigned long long busy = u + n + sy + irq + si + st;
+        unsigned long long total = busy + id + io;
+        unsigned long long dt = total - prev_total, db = busy - prev_busy;
+        if (dt > 0 && prev_total) {
+            cpu_pct = 100.0 * (double)db / (double)dt;
+        }
+        prev_total = total;
+        prev_busy = busy;
+    }
+    fclose(f);
 #endif
 }
 
@@ -104,14 +121,34 @@ static void sample_mem(void) {
         mem_used_gb = used / 1e9;
         mem_pct = total ? 100.0 * (double)used / (double)total : 0;
     }
+#else
+    // Linux: MemTotal/MemAvailable (in kB) from /proc/meminfo.
+    FILE *f = fopen("/proc/meminfo", "r");
+    if (!f) {
+        return;
+    }
+    char line[128];
+    unsigned long long total_kb = 0, avail_kb = 0;
+    while (fgets(line, sizeof(line), f)) {
+        sscanf(line, "MemTotal: %llu kB", &total_kb);
+        sscanf(line, "MemAvailable: %llu kB", &avail_kb);
+    }
+    fclose(f);
+    if (total_kb) {
+        unsigned long long used_kb = total_kb > avail_kb ? total_kb - avail_kb : 0;
+        mem_total_gb = total_kb * 1024.0 / 1e9;
+        mem_used_gb = used_kb * 1024.0 / 1e9;
+        mem_pct = 100.0 * (double)used_kb / (double)total_kb;
+    }
 #endif
 }
 
 static void sample_disk(void) {
-    struct statfs s;
-    if (statfs("/", &s) == 0) {
-        double total = (double)s.f_blocks * s.f_bsize;
-        double avail = (double)s.f_bavail * s.f_bsize;
+    struct statvfs s;
+    if (statvfs("/", &s) == 0) {
+        unsigned long unit = s.f_frsize ? s.f_frsize : s.f_bsize;
+        double total = (double)s.f_blocks * unit;
+        double avail = (double)s.f_bavail * unit;
         double used = total - avail;
         disk_total_gb = total / 1e9;
         disk_used_gb = used / 1e9;
@@ -139,12 +176,49 @@ static void sample_meta(void) {
     }
 #else
     ncpu = (int)sysconf(_SC_NPROCESSORS_ONLN);
+    FILE *f = fopen("/proc/uptime", "r");
+    if (f) {
+        double up = 0;
+        if (fscanf(f, "%lf", &up) == 1) {
+            uptime_sec = (long)up;
+        }
+        fclose(f);
+    }
+    f = fopen("/etc/os-release", "r");
+    if (f) {
+        char line[256];
+        while (fgets(line, sizeof(line), f)) {
+            if (strncmp(line, "PRETTY_NAME=", 12) != 0) {
+                continue;
+            }
+            char *p = line + 12;
+            size_t len = strlen(p);
+            while (len && (p[len - 1] == '\n' || p[len - 1] == '"')) {
+                p[--len] = 0;
+            }
+            if (*p == '"') {
+                p++;
+            }
+            if (*p) {
+                snprintf(osname, sizeof(osname), "%.*s", (int)sizeof(osname) - 1, p);
+            }
+            break;
+        }
+        fclose(f);
+    }
 #endif
 }
 
 static void sample_procs(void) {
     nprocs = 0;
-    FILE *f = popen("ps -Aceo pid=,pcpu=,pmem=,comm= -r 2>/dev/null", "r");
+#ifdef __APPLE__
+    // macOS: -c prints comm only, -r sorts by current CPU usage.
+    const char *cmd = "ps -Aceo pid=,pcpu=,pmem=,comm= -r 2>/dev/null";
+#else
+    // Linux/procps: --sort=-pcpu orders by CPU; comm= is the bare command name.
+    const char *cmd = "ps -eo pid=,pcpu=,pmem=,comm= --sort=-pcpu 2>/dev/null";
+#endif
+    FILE *f = popen(cmd, "r");
     if (!f) {
         return;
     }
